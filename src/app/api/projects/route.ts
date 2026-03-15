@@ -19,7 +19,7 @@ export async function GET(req: Request) {
     const { data, error } = await supabase
       .from("projects")
       .select("*")
-      .eq("user_id", user.id as ProjectInsert["user_id"])
+      .eq("user_id", user.id as string)
       .order("featured", { ascending: false })
       .order("created_at", { ascending: false });
 
@@ -56,7 +56,7 @@ export async function POST(req: Request) {
   const cleanDescription = description || metadata.description || "";
 
   const { data, error } = await supabase.from("projects").insert({
-    user_id: user.id,
+    user_id: user.id as string,
     url,
     description: cleanDescription,
     title,
@@ -83,7 +83,7 @@ export async function PUT(req: Request) {
     .from("projects")
     .update({ title, description, tags, featured })
     .eq("id", id)
-    .eq("user_id", user.id as ProjectInsert["user_id"])
+    .eq("user_id", user.id as string)
     .select();
 
   if (error) return errorResponse(error.message, 500);
@@ -105,7 +105,7 @@ export async function DELETE(req: Request) {
     .from("projects")
     .delete()
     .eq("id", id)
-    .eq("user_id", user.id as ProjectInsert["user_id"]);
+    .eq("user_id", user.id as string);
 
   if (error) return errorResponse(error.message, 500);
   return NextResponse.json({ success: true });
