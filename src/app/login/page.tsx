@@ -1,18 +1,23 @@
 ﻿"use client";
 
-import { FormEvent, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createSupabaseClient } from "@/lib/supabaseClient";
 
 export default function LoginPage() {
   const supabase = createSupabaseClient();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [redirectTo, setRedirectTo] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setRedirectTo(params.get("redirectTo"));
+  }, []);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -24,8 +29,7 @@ export default function LoginPage() {
       setLoading(false);
       return;
     }
-    const redirect = searchParams.get("redirectTo") || "/dashboard";
-    router.push(redirect);
+    router.push(redirectTo || "/dashboard");
   };
 
   return (
