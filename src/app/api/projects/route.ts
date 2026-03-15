@@ -3,6 +3,7 @@ import { createSupabaseServer } from "@/lib/supabaseServer";
 import { buildThumbnailUrl, errorResponse, fetchPageMetadata, isValidUrl } from "@/lib/project-utils";
 import type { Database } from "@/lib/types";
 
+type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
 type ProjectInsert = Database["public"]["Tables"]["projects"]["Insert"];
 
 export async function GET(req: Request) {
@@ -15,7 +16,7 @@ export async function GET(req: Request) {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return errorResponse("Não autenticado", 401);
-    const uid = user.id as Database["public"]["Tables"]["projects"]["Row"]["user_id"];
+    const uid = user.id as ProjectRow["user_id"];
 
     const { data, error } = await supabase
       .from("projects")
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
   } = await supabase.auth.getUser();
 
   if (!user) return errorResponse("Não autenticado", 401);
-  const uid = user.id as Database["public"]["Tables"]["projects"]["Row"]["user_id"];
+  const uid = user.id as ProjectRow["user_id"];
 
   const body = await req.json();
   const { url, description, title: providedTitle, tags } = body;
@@ -77,8 +78,7 @@ export async function PUT(req: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return errorResponse("Não autenticado", 401);
-  const uid = user.id as Database["public"]["Tables"]["projects"]["Row"]["user_id"];
-  const uid = user.id as Database["public"]["Tables"]["projects"]["Row"]["user_id"];
+  const uid = user.id as ProjectRow["user_id"];
 
   const { id, title, description, tags, featured } = await req.json();
   if (!id) return errorResponse("ID é obrigatório");
@@ -100,6 +100,7 @@ export async function DELETE(req: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return errorResponse("Não autenticado", 401);
+  const uid = user.id as ProjectRow["user_id"];
 
   const { searchParams } = new URL(req.url);
   const id = searchParams.get("id");
