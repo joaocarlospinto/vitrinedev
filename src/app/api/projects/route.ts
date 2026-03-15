@@ -1,0 +1,102 @@
+﻿import { NextResponse } from "next/server";
+import { createSupabaseServer } from "@/lib/supabaseServer";
+import { buildThumbnailUrl, errorResponse, fetchPageMetadata, isValidUrl } from "@/lib/project-utils";
+import type { Database } from "@/lib/types";
+
+export async function GET(req: Request) {
+  const supabase = await createSupabaseServer(req.headers);
+  const { searchParams } = new URL(req.url);
+  const mine = searchParams.get("mine");
+
+  let query = supabase
+    .from("projects")
+    .select("*")
+    .order("featured", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (mine === "true") {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return errorResponse("Não autenticado", 401);
+    query = query.eq("user_id", user.id);
+  }
+
+  const { data, error } = await query;
+  if (error) return errorResponse(error.message, 500);
+  return NextResponse.json({ projects: data });
+}
+
+export async function POST(req: Request) {
+  const supabase = await createSupabaseServer(req.headers);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return errorResponse("Não autenticado", 401);
+
+  const body = await req.json();
+  const { url, description, title: providedTitle, tags } = body;
+  if (!url || !description) return errorResponse("URL e descrição são obrigatórios");
+  if (!isValidUrl(url)) return errorResponse("URL inválida");
+
+  const metadata = await fetchPageMetadata(url);
+  const title = providedTitle || metadata.title || new URL(url).hostname;
+  const thumbnail_url = metadata.image || buildThumbnailUrl(url);
+  const cleanDescription = description || metadata.description || "";
+
+  const { data, error } = await supabase.from("projects").insert({
+    user_id: user.id,
+    url,
+    description: cleanDescription,
+    title,
+    thumbnail_url,
+    tags: tags ?? null,
+    clicks: 0,
+  } satisfies Database["public"]["Tables"]["projects"]["Insert"]);
+
+  if (error) return errorResponse(error.message, 500);
+  return NextResponse.json({ project: data?.[0] }, { status: 201 });
+}
+
+export async function PUT(req: Request) {
+  const supabase = await createSupabaseServer(req.headers);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return errorResponse("Não autenticado", 401);
+
+  const { id, title, description, tags, featured } = await req.json();
+  if (!id) return errorResponse("ID é obrigatório");
+
+  const { data, error } = await supabase
+    .from("projects")
+    .update({ title, description, tags, featured })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select();
+
+  if (error) return errorResponse(error.message, 500);
+  return NextResponse.json({ project: data?.[0] });
+}
+
+export async function DELETE(req: Request) {
+  const supabase = await createSupabaseServer(req.headers);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return errorResponse("Não autenticado", 401);
+
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  if (!id) return errorResponse("ID é obrigatório");
+
+  const { error } = await supabase
+    .from("projects")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id);
+
+  if (error) return errorResponse(error.message, 500);
+  return NextResponse.json({ success: true });
+}
