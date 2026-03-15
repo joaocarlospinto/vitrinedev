@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+ï»¿import { NextResponse } from "next/server";
 import { createSupabaseServer } from "@/lib/supabaseServer";
 import { errorResponse } from "@/lib/project-utils";
 
 export async function POST(req: Request) {
   const { id } = await req.json();
-  if (!id) return errorResponse("ID é obrigatório");
+  if (!id) return errorResponse("ID Ã© obrigatÃ³rio");
   const supabase = await createSupabaseServer(req.headers);
 
   const { error: rpcError } = await supabase.rpc("increment_clicks", { project_id: id });
