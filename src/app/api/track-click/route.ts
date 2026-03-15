@@ -17,7 +17,7 @@ export async function POST(req: Request) {
       .single();
 
     if (readError) return errorResponse(readError.message, 500);
-    const current = (data as { clicks: number } | null)?.clicks ?? 0;
+    const current = (data as { clicks?: number } | null)?.clicks ?? 0;
     const { error: writeError } = await supabase
       .from("projects")
       .update({ clicks: current + 1 } as { clicks: number })
