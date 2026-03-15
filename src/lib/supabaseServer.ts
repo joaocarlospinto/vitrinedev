@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+﻿import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import type { Database } from "./types";
 
@@ -7,9 +7,14 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
 export async function createSupabaseServer(reqHeaders?: Headers) {
   const cookieStore = await cookies();
+  const headersObj =
+    reqHeaders instanceof Headers
+      ? Object.fromEntries(reqHeaders.entries())
+      : (reqHeaders as Record<string, string> | undefined) ?? {};
+
   return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
     global: {
-      headers: reqHeaders,
+      headers: headersObj,
     },
     cookies: {
       get(name) {
