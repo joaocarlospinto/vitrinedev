@@ -8,21 +8,27 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const mine = searchParams.get("mine");
 
-  let query = supabase
+  const baseQuery = supabase
     .from("projects")
     .select("*")
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false });
 
-  if (mine === "true") {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return errorResponse("Não autenticado", 401);
-    query = query.eq("user_id", user.id);
-  }
+  const { data, error } =
+    mine === "true"
+      ? await (async () => {
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          if (!user) return { data: null, error: { message: "Não autenticado" } as any };
+          return baseQuery.eq("user_id", user.id);
+        })()
+      : await baseQuery;
 
-  const { data, error } = await query;
+  if (error) {
+    if (error.message === "Não autenticado") return errorResponse(error.message, 401);
+    return errorResponse(error.message, 500);
+  }
   if (error) return errorResponse(error.message, 500);
   return NextResponse.json({ projects: data });
 }
