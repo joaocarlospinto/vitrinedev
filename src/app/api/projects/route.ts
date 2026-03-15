@@ -19,7 +19,7 @@ export async function GET(req: Request) {
     const uid = user.id as ProjectRow["user_id"];
 
     const { data, error } = await supabase
-      .from("projects")
+      .from<ProjectRow>("projects")
       .select("*")
       .eq("user_id", uid)
       .order("featured", { ascending: false })
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
   }
 
   const { data, error } = await supabase
-    .from("projects")
+    .from<ProjectRow>("projects")
     .select("*")
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false });
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
   const thumbnail_url = metadata.image || buildThumbnailUrl(url);
   const cleanDescription = description || metadata.description || "";
 
-  const { data, error } = await supabase.from("projects").insert({
+  const { data, error } = await supabase.from<ProjectRow>("projects").insert({
     user_id: uid,
     url,
     description: cleanDescription,
@@ -84,7 +84,7 @@ export async function PUT(req: Request) {
   if (!id) return errorResponse("ID é obrigatório");
 
   const { data, error } = await supabase
-    .from("projects")
+    .from<ProjectRow>("projects")
     .update({ title, description, tags, featured })
     .eq("id", id)
     .eq("user_id", uid)
@@ -107,7 +107,7 @@ export async function DELETE(req: Request) {
   if (!id) return errorResponse("ID é obrigatório");
 
   const { error } = await supabase
-    .from("projects")
+    .from<ProjectRow>("projects")
     .delete()
     .eq("id", id)
     .eq("user_id", uid);
