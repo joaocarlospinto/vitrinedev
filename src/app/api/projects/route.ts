@@ -15,11 +15,12 @@ export async function GET(req: Request) {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return errorResponse("Não autenticado", 401);
+    const uid = user.id as Database["public"]["Tables"]["projects"]["Row"]["user_id"];
 
     const { data, error } = await supabase
       .from("projects")
       .select("*")
-      .eq("user_id", user.id as string)
+      .eq("user_id", uid)
       .order("featured", { ascending: false })
       .order("created_at", { ascending: false });
 
@@ -44,6 +45,7 @@ export async function POST(req: Request) {
   } = await supabase.auth.getUser();
 
   if (!user) return errorResponse("Não autenticado", 401);
+  const uid = user.id as Database["public"]["Tables"]["projects"]["Row"]["user_id"];
 
   const body = await req.json();
   const { url, description, title: providedTitle, tags } = body;
@@ -56,7 +58,7 @@ export async function POST(req: Request) {
   const cleanDescription = description || metadata.description || "";
 
   const { data, error } = await supabase.from("projects").insert({
-    user_id: user.id as string,
+    user_id: uid,
     url,
     description: cleanDescription,
     title,
@@ -75,6 +77,8 @@ export async function PUT(req: Request) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return errorResponse("Não autenticado", 401);
+  const uid = user.id as Database["public"]["Tables"]["projects"]["Row"]["user_id"];
+  const uid = user.id as Database["public"]["Tables"]["projects"]["Row"]["user_id"];
 
   const { id, title, description, tags, featured } = await req.json();
   if (!id) return errorResponse("ID é obrigatório");
@@ -83,7 +87,7 @@ export async function PUT(req: Request) {
     .from("projects")
     .update({ title, description, tags, featured })
     .eq("id", id)
-    .eq("user_id", user.id as string)
+    .eq("user_id", uid)
     .select();
 
   if (error) return errorResponse(error.message, 500);
@@ -105,7 +109,7 @@ export async function DELETE(req: Request) {
     .from("projects")
     .delete()
     .eq("id", id)
-    .eq("user_id", user.id as string);
+    .eq("user_id", uid);
 
   if (error) return errorResponse(error.message, 500);
   return NextResponse.json({ success: true });
