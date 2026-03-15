@@ -3,6 +3,8 @@ import { createSupabaseServer } from "@/lib/supabaseServer";
 import { buildThumbnailUrl, errorResponse, fetchPageMetadata, isValidUrl } from "@/lib/project-utils";
 import type { Database } from "@/lib/types";
 
+type ProjectInsert = Database["public"]["Tables"]["projects"]["Insert"];
+
 export async function GET(req: Request) {
   const supabase = await createSupabaseServer(req.headers);
   const { searchParams } = new URL(req.url);
@@ -17,7 +19,7 @@ export async function GET(req: Request) {
     const { data, error } = await supabase
       .from("projects")
       .select("*")
-      .eq("user_id", user.id)
+      .eq("user_id", user.id as ProjectInsert["user_id"])
       .order("featured", { ascending: false })
       .order("created_at", { ascending: false });
 
@@ -61,7 +63,7 @@ export async function POST(req: Request) {
     thumbnail_url,
     tags: tags ?? null,
     clicks: 0,
-  } satisfies Database["public"]["Tables"]["projects"]["Insert"]);
+  } satisfies ProjectInsert);
 
   if (error) return errorResponse(error.message, 500);
   return NextResponse.json({ project: data?.[0] }, { status: 201 });
@@ -81,7 +83,7 @@ export async function PUT(req: Request) {
     .from("projects")
     .update({ title, description, tags, featured })
     .eq("id", id)
-    .eq("user_id", user.id)
+    .eq("user_id", user.id as ProjectInsert["user_id"])
     .select();
 
   if (error) return errorResponse(error.message, 500);
@@ -103,7 +105,7 @@ export async function DELETE(req: Request) {
     .from("projects")
     .delete()
     .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("user_id", user.id as ProjectInsert["user_id"]);
 
   if (error) return errorResponse(error.message, 500);
   return NextResponse.json({ success: true });
