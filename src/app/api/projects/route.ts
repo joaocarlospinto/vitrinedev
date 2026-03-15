@@ -6,29 +6,31 @@ import type { Database } from "@/lib/types";
 export async function GET(req: Request) {
   const supabase = await createSupabaseServer(req.headers);
   const { searchParams } = new URL(req.url);
-  const mine = searchParams.get("mine");
+  const mine = searchParams.get("mine") === "true";
 
-  const baseQuery = supabase
+  if (mine) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return errorResponse("Não autenticado", 401);
+
+    const { data, error } = await supabase
+      .from("projects")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("featured", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    if (error) return errorResponse(error.message, 500);
+    return NextResponse.json({ projects: data });
+  }
+
+  const { data, error } = await supabase
     .from("projects")
     .select("*")
     .order("featured", { ascending: false })
     .order("created_at", { ascending: false });
 
-  const { data, error } =
-    mine === "true"
-      ? await (async () => {
-          const {
-            data: { user },
-          } = await supabase.auth.getUser();
-          if (!user) return { data: null, error: { message: "Não autenticado" } as any };
-          return baseQuery.eq("user_id", user.id);
-        })()
-      : await baseQuery;
-
-  if (error) {
-    if (error.message === "Não autenticado") return errorResponse(error.message, 401);
-    return errorResponse(error.message, 500);
-  }
   if (error) return errorResponse(error.message, 500);
   return NextResponse.json({ projects: data });
 }
