@@ -7,7 +7,7 @@ import type { Project } from "@/lib/types";
 export default async function Home() {
   const supabase = await createSupabaseServer();
   const { data, error } = await supabase.from("projects").select("*");
-  const projects = (data as Project[]) ?? [];
+  const projects = (data as unknown as Project[]) ?? [];
   if (error) console.error(error);
 
   return (
