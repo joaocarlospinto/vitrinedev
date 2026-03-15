@@ -3,8 +3,11 @@ import { createSupabaseServer } from "@/lib/supabaseServer";
 import { buildThumbnailUrl, errorResponse, fetchPageMetadata, isValidUrl } from "@/lib/project-utils";
 import type { Database } from "@/lib/types";
 
+type ProjectRow = Database["public"]["Tables"]["projects"]["Row"];
+type ProjectInsert = Database["public"]["Tables"]["projects"]["Insert"];
+
 export async function GET(req: Request) {
-  const supabase = await createSupabaseServer(req.headers);
+  const supabase = await createSupabaseServer(req.headers, true);
   const sb: any = supabase;
   const { searchParams } = new URL(req.url);
   const mine = searchParams.get("mine") === "true";
@@ -38,7 +41,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const supabase = await createSupabaseServer(req.headers);
+  const supabase = await createSupabaseServer(req.headers, true);
   const sb: any = supabase;
   const {
     data: { user },
@@ -65,14 +68,14 @@ export async function POST(req: Request) {
     thumbnail_url,
     tags: tags ?? null,
     clicks: 0,
-  });
+  } satisfies ProjectInsert);
 
   if (error) return errorResponse(error.message, 500);
   return NextResponse.json({ project: data?.[0] }, { status: 201 });
 }
 
 export async function PUT(req: Request) {
-  const supabase = await createSupabaseServer(req.headers);
+  const supabase = await createSupabaseServer(req.headers, true);
   const sb: any = supabase;
   const {
     data: { user },
@@ -95,7 +98,7 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  const supabase = await createSupabaseServer(req.headers);
+  const supabase = await createSupabaseServer(req.headers, true);
   const sb: any = supabase;
   const {
     data: { user },

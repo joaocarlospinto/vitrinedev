@@ -5,7 +5,7 @@ import { errorResponse } from "@/lib/project-utils";
 export async function POST(req: Request) {
   const { id } = await req.json();
   if (!id) return errorResponse("ID é obrigatório");
-  const supabase = await createSupabaseServer(req.headers);
+  const supabase = await createSupabaseServer(req.headers, true);
   const sb: any = supabase;
 
   const { error: rpcError } = await sb.rpc("increment_clicks", { project_id: id });
